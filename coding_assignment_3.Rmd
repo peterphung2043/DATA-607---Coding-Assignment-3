@@ -1,0 +1,196 @@
+---
+title: "Coding Assignment 3"
+author: "Peter Phung"
+output: html_document
+---
+```{r import libraries, warning = FALSE, message = FALSE}
+library(dplyr)
+library(tidyverse)
+library(readr)
+```
+## Introduction
+
+In this assignment, we are asked to answer several questions on regex (regular expressions). Regex are string manipulators used to parse through unstructred data, which can turn unusable string data into usable data for analysis. 4 questions pertaining to regular expressions were answered in this RMarkdown.
+
+## Question 1
+
+*Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS"*
+
+**Answer: ** Alternation was used in a regex statement to pick between the `DATA` and `STATISTICS` keywords. The majors that contain either `DATA` or `STATISTICS` are shown after the code block below.
+
+
+```{r question_1}
+urlfile <- 'https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv'
+college_data <- read.csv(url(urlfile), stringsAsFactors = FALSE)
+
+str_view(college_data$Major, "(DATA|STATISTICS)", match = TRUE)
+```
+
+## Question 2
+
+*#2 Write code that transforms the data below:*
+
+`[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"`
+
+`[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"`  
+
+`[9] "elderberry"   "lime"         "lychee"       "mulberry"`    
+
+`[13] "olive"        "salal berry"`
+
+*Into a format like this:*
+
+`c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili` `pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")`
+
+**Answer: ** The data above is read in as a string vector stored in the `raw_string` variable. 
+
+```{r question_2_answer_p1}
+urlfile_q2 <- 'https://raw.githubusercontent.com/peterphung2043/DATA-607---Coding-Assignment-3/main/question_2_raw.txt'
+
+raw_string <- readr::read_file(url(urlfile_q2))
+
+raw_string
+```
+\
+In `raw_string`, each food item was placed between two `\"` character values. `str_extract_all`
+was used in order to extract each food item, by treating each food item as a series of letters (using the `[:alpha:]` regex notation) and by using `\"` as a delimiter. Then `str_replace_all` was used to turn each instance of `\"` in each element of the list into a `""`, which effectively eliminates every instance of `\"` from the entire list.
+\
+\
+```{r question_2_answer_p2}
+raw_string_vector <- str_extract_all(raw_string, "([\"][:alpha:]*[\"]|[\"][:alpha:]*[:space:][:alpha:]*[\"])")[[1]] %>%
+  str_replace_all("[\"]", "")
+
+c(raw_string_vector)
+```
+
+`c(raw_string_vector)` has the same output as `c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili` `pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")`
+
+```{r question_2_answer_p3}
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili` `pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+```
+
+## Question 3
+
+Describe, in words, what these expressions will match:
+
+- `(.)\1\1`
+- `"(.)(.)\\2\\1"`
+- `(..)\1`
+- `"(.).\\1.\\1"`
+- `"(.)(.)(.).*\\3\\2\\1"`
+
+#### `(.)\1\1`
+
+This one will match words which have the same three letters in a row.
+
+```{r question_3_part_1}
+x <- c("goddessship", "skulllike", "headmistressship", "mango", "banana")
+str_view(x, "(.)\\1\\1", match = TRUE)
+```
+
+#### `(.)(.)\\2\\1`
+
+This regex will return a string where the following criterion are met:
+\
+1. The first letter of a word will be in the first capturing group (`\1`)
+\
+2. The second letter of a word will be in the second capturing group (`\2`). 
+\
+3. The third letter must be the same as the second letter because of the backreference `\\2`.
+\
+4. The fourth letter must be the same as the first letter because of the backreference `\\1`.
+This regex will search for all characters in the string that match this 4 letter pattern.
+
+```{r question_3_part_2} 
+x <- c("ghkllk", "assath", "mango", "banana", "kiwi", "pineapple")
+str_view(x, "(.)(.)\\2\\1", match = TRUE)
+```
+
+#### `(..)\1`
+
+This finds all character strings that have a repeated pair of letters.
+
+```{r question_3_part_3}
+str_view(fruit, "(..)\\1", match = TRUE)
+```
+
+#### `(.).\\1.\\1`
+
+This regex will return a string where the following criterion are met:
+\
+1. The first character is any character. Since it is in parenthesis, this character will belong to the first capturing group.
+\
+2. The second character is any character.
+\
+3. The third character must be the same as the first character, since it refers to the first capturing group (\1)
+\
+4. The fourth character is any character.
+\
+5. The fifth character must also be the same as the first character, for the same reason as criteria 3.
+
+```{r question_3_part_4}
+x <- fruit
+str_view(x, "(.).\\1.\\1", match = TRUE)
+```
+
+#### `(.)(.)(.).*\\3\\2\\1`
+
+This regex will return a string where the following criterion are met:
+\
+1. The first character is any character and it will be part of the 1st capturing group.
+\
+2. The 2nd character is any character and it will be part of the 2nd capturing group.
+\
+3. The 3rd character is any character and it will be part of the 3rd capturing group.
+\
+4. `.*` represents a set of characters of any length. So after the 3rd character, a set of characters of any length can be used and the regex criteria will still be met (given the 5th, 6th, and 7th criteria are also met as well).
+\
+5. The 5th character is the 3rd character, since the backreference references the third character (\3)
+\
+6. The 6th character is the 2nd character, since the backreference references the second character (\2)
+\
+7. The 7th character is the 1st character, since the backreference references the first character (\1)
+
+```{r question_3_part_5}
+x <- c("abchcba", "banana", "gkyvykg", "rkxuhgnkioghuiop", "mango", "pears")
+str_view(x, "(.)(.)(.).*\\3\\2\\1", match = TRUE)
+```
+
+## Question 4
+
+Construct regular expressions to match words that:
+
+- Start and end with the same character.
+- Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+- Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+**For each answer, the regular expressions were placed in a `str_view` function call as a check to see if the regular expressions give the correct output.**
+
+#### Start and end with the same character.
+
+```{r question_4_part_1}
+x <- c("abchcba", "banana", "gkyvykg", "rkxuhgnghuiop", "mango", "pears")
+str_view(x, "^(.).*\\1", match = TRUE)
+```
+
+#### Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+```{r question_4_part_2}
+x <- c("abchcba", "banana", "gkyvykg", "rkxuhgnghuiop", "mango", "pears", "church","asghqenpghew")
+str_view(x, "(..).*\\1", match = TRUE)
+```
+
+#### Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+```{r question_4_part_3}
+x <- c("abbchcba", "banana", "gkyvykg", "rkxuhgnghuiop", "mango", "pears", "church","asghqenpghew",
+       "eleven", "qrhgqnuiqa", "aahgq", "bbbbghr")
+str_view(x, "(.).*\\1.*\\1", match = TRUE)
+```
+
+## Conclusion
+These questions were very useful for me to understand how to use regular expressions in R. Regular expressions are very powerful data manipulation expressions used across many programming languages. When working with unstructured data in the future, I hope to be able to apply what I learned from completing this coding assignment to that data.
+
+## References
+[1] Grolemund, H. W. and G. (n.d.). R for data science. 14 Strings | R for Data Science. Retrieved September 12, 2021, from https://r4ds.had.co.nz/strings.html?q=backslash#string-basics. 
+
